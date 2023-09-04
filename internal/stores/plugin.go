@@ -15,6 +15,18 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+type CommandNotFoundError struct {
+	Err error
+}
+
+func (p *CommandNotFoundError) Error() string {
+	return fmt.Sprintf("command not found: %s", p.Err.Error())
+}
+
+func (p *CommandNotFoundError) Unwrap() error {
+	return p.Err
+}
+
 var (
 	PluginSet = plugin.PluginSet{
 		"store": &storePlugin{},
@@ -132,6 +144,9 @@ type PluggableStore struct {
 }
 
 func NewPluggableStore(cmd *exec.Cmd) (*PluggableStore, error) {
+	if _, err := exec.LookPath(cmd.Path); err != nil {
+		return nil, &CommandNotFoundError{Err: err}
+	}
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig:  HandshakeConfig,
 		Plugins:          PluginSet,
