@@ -26,6 +26,7 @@ type PluginClient interface {
 	Upload(ctx context.Context, in *Objects, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Retrieve(ctx context.Context, in *Objects, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetOptions(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Options, error)
+	Init(ctx context.Context, in *ConfigData, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type pluginClient struct {
@@ -63,6 +64,15 @@ func (c *pluginClient) GetOptions(ctx context.Context, in *emptypb.Empty, opts .
 	return out, nil
 }
 
+func (c *pluginClient) Init(ctx context.Context, in *ConfigData, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/plugin.Plugin/Init", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PluginServer is the server API for Plugin service.
 // All implementations must embed UnimplementedPluginServer
 // for forward compatibility
@@ -70,6 +80,7 @@ type PluginServer interface {
 	Upload(context.Context, *Objects) (*emptypb.Empty, error)
 	Retrieve(context.Context, *Objects) (*emptypb.Empty, error)
 	GetOptions(context.Context, *emptypb.Empty) (*Options, error)
+	Init(context.Context, *ConfigData) (*emptypb.Empty, error)
 	mustEmbedUnimplementedPluginServer()
 }
 
@@ -85,6 +96,9 @@ func (UnimplementedPluginServer) Retrieve(context.Context, *Objects) (*emptypb.E
 }
 func (UnimplementedPluginServer) GetOptions(context.Context, *emptypb.Empty) (*Options, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOptions not implemented")
+}
+func (UnimplementedPluginServer) Init(context.Context, *ConfigData) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Init not implemented")
 }
 func (UnimplementedPluginServer) mustEmbedUnimplementedPluginServer() {}
 
@@ -153,6 +167,24 @@ func _Plugin_GetOptions_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Plugin_Init_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfigData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PluginServer).Init(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/plugin.Plugin/Init",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PluginServer).Init(ctx, req.(*ConfigData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Plugin_ServiceDesc is the grpc.ServiceDesc for Plugin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -171,6 +203,10 @@ var Plugin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOptions",
 			Handler:    _Plugin_GetOptions_Handler,
+		},
+		{
+			MethodName: "Init",
+			Handler:    _Plugin_Init_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

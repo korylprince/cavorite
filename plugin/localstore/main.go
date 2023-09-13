@@ -42,5 +42,8 @@ func main() {
 		logger: hlog,
 	}
 
-	stores.ListenAndServePlugin(ls, hlog)
+	ps := stores.NewPluginServer(ls, hlog)
+	hlog.Info("config", "config", ps.Config())
+
+	ps.Wait()
 }

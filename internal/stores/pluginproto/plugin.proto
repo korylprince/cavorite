@@ -14,8 +14,15 @@ message Options {
   string region = 3;
 }
 
+message ConfigData {
+  string a = 1;
+  int64 b = 2;
+  bool c = 3;
+}
+
 service Plugin {
   rpc Upload(Objects) returns (google.protobuf.Empty) {}
   rpc Retrieve(Objects) returns (google.protobuf.Empty) {}
   rpc GetOptions(google.protobuf.Empty) returns (Options) {}
+  rpc Init(ConfigData) returns (google.protobuf.Empty) {}
 }
